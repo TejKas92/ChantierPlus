@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth, clients, avenants, transcribe
+from .routers import auth, clients, avenants, transcribe, company
 from .database import engine, Base
 from . import models  # Import models to register them with SQLAlchemy
 
@@ -24,6 +24,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(company.router)
 app.include_router(clients.router)
 app.include_router(avenants.router)
 app.include_router(transcribe.router)

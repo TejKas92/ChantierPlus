@@ -58,6 +58,22 @@ class SetPassword(BaseModel):
     token: str
     password: str
 
+class UpdateCompany(BaseModel):
+    name: str
+
+class UpdateEmployeeRole(BaseModel):
+    role: str
+
+class EmployeeInfo(BaseModel):
+    id: UUID
+    email: EmailStr
+    role: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class RequestPasswordReset(BaseModel):
     email: EmailStr
 

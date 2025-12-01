@@ -10,6 +10,7 @@ import ActivateAccount from './pages/ActivateAccount';
 import Dashboard from './pages/Dashboard';
 import CreateAvenant from './pages/CreateAvenant';
 import AvenantDetails from './pages/AvenantDetails';
+import CompanySettings from './pages/CompanySettings';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="settings" element={<CompanySettings />} />
             <Route path="create-avenant/:clientId" element={<CreateAvenant />} />
             <Route path="avenant/:id" element={<AvenantDetails />} />
           </Route>

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { Hammer, LogOut, UserPlus, Menu, X } from 'lucide-react';
+import { Hammer, LogOut, Settings, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import InviteEmployeeModal from './InviteEmployeeModal';
 
 const Layout: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const [showInviteModal, setShowInviteModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
@@ -35,14 +33,14 @@ const Layout: React.FC = () => {
                         {/* Desktop Navigation */}
                         <nav className="hidden md:flex items-center gap-4">
                             {isOwner && (
-                                <button
-                                    onClick={() => setShowInviteModal(true)}
+                                <Link
+                                    to="/settings"
                                     className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                                 >
-                                    <UserPlus size={18} />
-                                    <span className="hidden lg:inline">Inviter un employé</span>
-                                    <span className="lg:hidden">Inviter</span>
-                                </button>
+                                    <Settings size={18} />
+                                    <span className="hidden lg:inline">Gestion de la société</span>
+                                    <span className="lg:hidden">Gestion</span>
+                                </Link>
                             )}
                             <div className="hidden lg:flex items-center gap-2 text-sm px-3 py-2 bg-slate-700 rounded-lg">
                                 <span className="text-gray-300">{user?.email}</span>
@@ -81,16 +79,14 @@ const Layout: React.FC = () => {
 
                             {/* Menu items */}
                             {isOwner && (
-                                <button
-                                    onClick={() => {
-                                        setShowInviteModal(true);
-                                        setMobileMenuOpen(false);
-                                    }}
+                                <Link
+                                    to="/settings"
+                                    onClick={() => setMobileMenuOpen(false)}
                                     className="w-full flex items-center gap-2 bg-primary text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition"
                                 >
-                                    <UserPlus size={18} />
-                                    <span>Inviter un employé</span>
-                                </button>
+                                    <Settings size={18} />
+                                    <span>Gestion de la société</span>
+                                </Link>
                             )}
 
                             <button
@@ -112,11 +108,6 @@ const Layout: React.FC = () => {
             <footer className="bg-slate-200 p-4 text-center text-slate-600 text-sm">
                 &copy; 2025 ChantierPlus
             </footer>
-
-            <InviteEmployeeModal
-                isOpen={showInviteModal}
-                onClose={() => setShowInviteModal(false)}
-            />
         </div>
     );
 };
