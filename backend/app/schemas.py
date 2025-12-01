@@ -43,10 +43,13 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserProfileWithCompany(UserProfile):
+    company_name: str
+
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user: UserProfile
+    user: UserProfileWithCompany
 
 class InviteEmployee(BaseModel):
     email: EmailStr

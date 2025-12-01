@@ -26,7 +26,10 @@ const Layout: React.FC = () => {
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary">
                             <Hammer size={24} />
-                            <span>ChantierPlus</span>
+                            <div className="flex flex-col">
+                                <span>ChantierPlus</span>
+                                <span className="text-xs text-gray-400 font-normal">{user?.company_name}</span>
+                            </div>
                         </Link>
 
                         {/* Desktop Navigation */}

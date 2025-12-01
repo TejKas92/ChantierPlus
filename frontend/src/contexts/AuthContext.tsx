@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: string;
   company_id: string;
+  company_name: string;
   is_active: boolean;
   created_at: string;
 }

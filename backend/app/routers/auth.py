@@ -63,10 +63,21 @@ async def register(
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
 
+    # Create user dict with company name
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "company_id": user.company_id,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "company_name": user_data.company_name,
+    }
+
     return schemas.Token(
         access_token=access_token,
         token_type="bearer",
-        user=schemas.UserProfile.model_validate(user),
+        user=schemas.UserProfileWithCompany(**user_dict),
     )
 
 
@@ -102,10 +113,27 @@ async def login(
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
 
+    # Get company info
+    result_company = await db.execute(
+        select(models.Company).where(models.Company.id == user.company_id)
+    )
+    company = result_company.scalars().first()
+
+    # Create user dict with company name
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "company_id": user.company_id,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "company_name": company.name if company else "Unknown",
+    }
+
     return schemas.Token(
         access_token=access_token,
         token_type="bearer",
-        user=schemas.UserProfile.model_validate(user),
+        user=schemas.UserProfileWithCompany(**user_dict),
     )
 
 
@@ -256,10 +284,27 @@ async def activate_account(
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
 
+    # Get company info
+    result_company = await db.execute(
+        select(models.Company).where(models.Company.id == user.company_id)
+    )
+    company = result_company.scalars().first()
+
+    # Create user dict with company name
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "company_id": user.company_id,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "company_name": company.name if company else "Unknown",
+    }
+
     return schemas.Token(
         access_token=access_token,
         token_type="bearer",
-        user=schemas.UserProfile.model_validate(user),
+        user=schemas.UserProfileWithCompany(**user_dict),
     )
 
 
@@ -330,8 +375,25 @@ async def reset_password(
     # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
 
+    # Get company info
+    result_company = await db.execute(
+        select(models.Company).where(models.Company.id == user.company_id)
+    )
+    company = result_company.scalars().first()
+
+    # Create user dict with company name
+    user_dict = {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "company_id": user.company_id,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "company_name": company.name if company else "Unknown",
+    }
+
     return schemas.Token(
         access_token=access_token,
         token_type="bearer",
-        user=schemas.UserProfile.model_validate(user),
+        user=schemas.UserProfileWithCompany(**user_dict),
     )
