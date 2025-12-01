@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+@theme {
+  --color-primary: #f59e0b;
+  --color-secondary: #1e293b;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
