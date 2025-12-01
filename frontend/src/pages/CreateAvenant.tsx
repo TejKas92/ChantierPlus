@@ -20,10 +20,31 @@ const CreateAvenant: React.FC = () => {
     const [signatureData, setSignatureData] = useState('');
     const [photo, setPhoto] = useState<File | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [photoError, setPhotoError] = useState<string | null>(null);
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPhotoError(null);
+
         if (e.target.files && e.target.files[0]) {
-            setPhoto(e.target.files[0]);
+            const file = e.target.files[0];
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                setPhotoError('Type de fichier non autorisé. Utilisez JPG, PNG, GIF ou WebP.');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            // Validate file size (10 MB max)
+            const maxSize = 10 * 1024 * 1024; // 10 MB
+            if (file.size > maxSize) {
+                setPhotoError('Fichier trop volumineux. Taille maximale: 10 MB.');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            setPhoto(file);
         }
     };
 
@@ -60,9 +81,10 @@ const CreateAvenant: React.FC = () => {
             });
 
             navigate(`/avenant/${response.data.id}`);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating avenant:", error);
-            alert("Erreur lors de la création de l'avenant.");
+            const errorMessage = error.response?.data?.detail || "Erreur lors de la création de l'avenant.";
+            alert(errorMessage);
         } finally {
             setSubmitting(false);
         }
@@ -99,10 +121,12 @@ const CreateAvenant: React.FC = () => {
                         <label className="cursor-pointer bg-slate-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition">
                             <Camera size={20} />
                             <span>Prendre une photo</span>
-                            <input type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} className="hidden" />
+                            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" capture="environment" onChange={handlePhotoChange} className="hidden" />
                         </label>
                         {photo && <span className="text-sm text-green-600">Photo sélectionnée: {photo.name}</span>}
                     </div>
+                    {photoError && <p className="text-sm text-red-500">{photoError}</p>}
+                    <p className="text-xs text-slate-500">Formats acceptés: JPG, PNG, GIF, WebP (max 10 MB)</p>
                 </div>
 
                 {/* Pricing Section */}

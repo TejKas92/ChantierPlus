@@ -3,10 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
 from .. import models, schemas, database
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 import shutil
 import os
+from pathlib import Path
 
 router = APIRouter(
     prefix="/avenants",
@@ -67,9 +68,45 @@ async def create_avenant(
 
 @router.post("/files")
 async def upload_file(file: UploadFile = File(...)):
-    # Simulate file storage
-    file_location = f"uploads/{file.filename}"
+    # Validate file type
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    # Check MIME type
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Type de fichier non autorisé. Types acceptés: {', '.join(ALLOWED_MIME_TYPES)}"
+        )
+
+    # Get file extension
+    file_ext = Path(file.filename).suffix.lower() if file.filename else ""
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extension de fichier non autorisée. Extensions acceptées: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
+    # Read file content to check size
+    file_content = await file.read()
+    file_size = len(file_content)
+
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Fichier trop volumineux. Taille maximale: {MAX_FILE_SIZE // (1024*1024)} MB"
+        )
+
+    # Generate unique filename with UUID
+    unique_filename = f"{uuid4()}{file_ext}"
+    file_location = f"uploads/{unique_filename}"
+
+    # Create uploads directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
-    with open(file_location, "wb+") as file_object:
-        shutil.copyfileobj(file.file, file_object)
+
+    # Save file
+    with open(file_location, "wb") as file_object:
+        file_object.write(file_content)
+
     return {"photo_url": file_location}
