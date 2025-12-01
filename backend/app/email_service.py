@@ -15,8 +15,8 @@ async def send_invitation_email(email: str, token: str, company_name: str):
     """
     invitation_link = f"{FRONTEND_URL}/activate?token={token}"
 
-    # In production, send real email here
-    logger.info(f"""
+    # Print to console
+    message = f"""
     ========================================
     EMAIL INVITATION
     ========================================
@@ -35,9 +35,14 @@ async def send_invitation_email(email: str, token: str, company_name: str):
     Cordialement,
     L'équipe ChantierPlus
     ========================================
-    """)
+    """
 
+    print(message)
     print(f"\n🔗 INVITATION LINK: {invitation_link}\n")
+
+    # Also log
+    logger.info(message)
+
     return True
 
 async def send_password_reset_email(email: str, token: str):
@@ -46,8 +51,8 @@ async def send_password_reset_email(email: str, token: str):
     """
     reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
 
-    # In production, send real email here
-    logger.info(f"""
+    # Print to console
+    message = f"""
     ========================================
     EMAIL PASSWORD RESET
     ========================================
@@ -68,7 +73,12 @@ async def send_password_reset_email(email: str, token: str):
     Cordialement,
     L'équipe ChantierPlus
     ========================================
-    """)
+    """
 
+    print(message)
     print(f"\n🔗 PASSWORD RESET LINK: {reset_link}\n")
+
+    # Also log
+    logger.info(message)
+
     return True
