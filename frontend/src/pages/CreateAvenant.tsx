@@ -22,6 +22,49 @@ const CreateAvenant: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [photoError, setPhotoError] = useState<string | null>(null);
 
+    // Clear signature when critical fields change
+    const clearSignature = () => {
+        console.log('Clearing signature - before:', signatureData ? 'has signature' : 'no signature');
+        setSignatureData('');
+        console.log('Clearing signature - after: set to empty');
+    };
+
+    const handleDescriptionChange = (value: string) => {
+        setDescription(value);
+        if (signatureData) {
+            console.log('Description changed, clearing signature');
+            clearSignature();
+        }
+    };
+
+    const handleTypeChange = (newType: 'FORFAIT' | 'REGIE') => {
+        setType(newType);
+        if (signatureData) {
+            clearSignature();
+        }
+    };
+
+    const handlePriceChange = (value: string) => {
+        setPrice(value);
+        if (signatureData) {
+            clearSignature();
+        }
+    };
+
+    const handleHoursChange = (value: string) => {
+        setHours(value);
+        if (signatureData) {
+            clearSignature();
+        }
+    };
+
+    const handleHourlyRateChange = (value: string) => {
+        setHourlyRate(value);
+        if (signatureData) {
+            clearSignature();
+        }
+    };
+
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPhotoError(null);
 
@@ -45,6 +88,10 @@ const CreateAvenant: React.FC = () => {
             }
 
             setPhoto(file);
+            // Clear signature when photo changes
+            if (signatureData) {
+                clearSignature();
+            }
         }
     };
 
@@ -94,6 +141,20 @@ const CreateAvenant: React.FC = () => {
         ? (parseFloat(price) || 0)
         : (parseFloat(hours) || 0) * (parseFloat(hourlyRate) || 0);
 
+    // Check if all required fields are filled
+    const isFormValid = () => {
+        if (!description.trim()) return false;
+        if (!photo) return false;
+
+        if (type === 'FORFAIT') {
+            return parseFloat(price) > 0;
+        } else {
+            return parseFloat(hours) > 0 && parseFloat(hourlyRate) > 0;
+        }
+    };
+
+    const canSign = isFormValid();
+
     return (
         <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
             <h1 className="text-2xl font-bold mb-6 text-slate-800">Nouvel Avenant</h1>
@@ -105,18 +166,20 @@ const CreateAvenant: React.FC = () => {
                     <div className="flex gap-2">
                         <textarea
                             value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            onChange={(e) => handleDescriptionChange(e.target.value)}
                             className="flex-1 border border-slate-300 rounded-lg p-2 min-h-[100px]"
                             placeholder="Décrivez les travaux supplémentaires..."
                             required
                         />
                     </div>
-                    <AudioRecorder onTranscription={(text) => setDescription(prev => prev + (prev ? ' ' : '') + text)} />
+                    <AudioRecorder onTranscription={(text) => handleDescriptionChange(description + (description ? ' ' : '') + text)} />
                 </div>
 
                 {/* Photo Section */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700">Photo (Preuve)</label>
+                    <label className="block text-sm font-medium text-slate-700">
+                        Photo (Preuve) <span className="text-red-500">*</span>
+                    </label>
                     <div className="flex items-center gap-4">
                         <label className="cursor-pointer bg-slate-100 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-200 transition">
                             <Camera size={20} />
@@ -136,7 +199,7 @@ const CreateAvenant: React.FC = () => {
                             <input
                                 type="radio"
                                 checked={type === 'FORFAIT'}
-                                onChange={() => setType('FORFAIT')}
+                                onChange={() => handleTypeChange('FORFAIT')}
                                 className="text-primary focus:ring-primary"
                             />
                             <span className="font-medium">Forfait</span>
@@ -145,7 +208,7 @@ const CreateAvenant: React.FC = () => {
                             <input
                                 type="radio"
                                 checked={type === 'REGIE'}
-                                onChange={() => setType('REGIE')}
+                                onChange={() => handleTypeChange('REGIE')}
                                 className="text-primary focus:ring-primary"
                             />
                             <span className="font-medium">Régie</span>
@@ -159,7 +222,7 @@ const CreateAvenant: React.FC = () => {
                                 type="number"
                                 step="0.01"
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                onChange={(e) => handlePriceChange(e.target.value)}
                                 className="w-full border border-slate-300 rounded-lg p-2 mt-1"
                                 required
                             />
@@ -172,7 +235,7 @@ const CreateAvenant: React.FC = () => {
                                     type="number"
                                     step="0.5"
                                     value={hours}
-                                    onChange={(e) => setHours(e.target.value)}
+                                    onChange={(e) => handleHoursChange(e.target.value)}
                                     className="w-full border border-slate-300 rounded-lg p-2 mt-1"
                                     required
                                 />
@@ -183,7 +246,7 @@ const CreateAvenant: React.FC = () => {
                                     type="number"
                                     step="0.01"
                                     value={hourlyRate}
-                                    onChange={(e) => setHourlyRate(e.target.value)}
+                                    onChange={(e) => handleHourlyRateChange(e.target.value)}
                                     className="w-full border border-slate-300 rounded-lg p-2 mt-1"
                                     required
                                 />
@@ -199,14 +262,30 @@ const CreateAvenant: React.FC = () => {
 
                 {/* Signature Section */}
                 <div className="space-y-2 border-t pt-4">
-                    <label className="block text-sm font-medium text-slate-700">Signature du Client</label>
-                    <SignaturePad onEnd={setSignatureData} />
-                    {!signatureData && <p className="text-sm text-red-500">La signature est requise.</p>}
+                    <label className="block text-sm font-medium text-slate-700">
+                        Signature du Client <span className="text-red-500">*</span>
+                    </label>
+                    {!canSign && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                            <p className="text-sm text-amber-800">
+                                ⚠️ Veuillez compléter tous les champs requis (description, photo, prix) avant de signer
+                            </p>
+                        </div>
+                    )}
+                    {signatureData && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                            <p className="text-sm text-blue-800">
+                                ℹ️ Toute modification des champs ci-dessus effacera la signature
+                            </p>
+                        </div>
+                    )}
+                    <SignaturePad onEnd={setSignatureData} disabled={!canSign} signatureData={signatureData} />
+                    {canSign && !signatureData && <p className="text-sm text-red-500">La signature est requise.</p>}
                 </div>
 
                 <button
                     type="submit"
-                    disabled={submitting || !signatureData}
+                    disabled={submitting || !signatureData || !canSign}
                     className="w-full bg-primary text-white py-3 rounded-lg font-bold text-lg hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
                     {submitting ? <Loader2 className="animate-spin" /> : <Save />}
