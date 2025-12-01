@@ -81,15 +81,15 @@ class ResetPassword(BaseModel):
     token: str
     password: str
 
-class ClientBase(BaseModel):
+class ChantierBase(BaseModel):
     name: str
     address: str
     email: EmailStr
 
-class ClientCreate(ClientBase):
+class ChantierCreate(ChantierBase):
     pass
 
-class Client(ClientBase):
+class Chantier(ChantierBase):
     id: UUID
     company_id: UUID
     created_at: datetime
@@ -107,11 +107,11 @@ class AvenantBase(BaseModel):
     signature_data: Optional[str] = None
 
 class AvenantCreate(AvenantBase):
-    client_id: UUID
+    chantier_id: UUID
 
 class Avenant(AvenantBase):
     id: UUID
-    client_id: UUID
+    chantier_id: UUID
     total_ht: Decimal
     signed_at: Optional[datetime]
     status: str

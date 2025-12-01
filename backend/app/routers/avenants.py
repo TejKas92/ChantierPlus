@@ -32,14 +32,14 @@ async def create_avenant(
     db: AsyncSession = Depends(database.get_db),
     current_user: models.UserProfile = Depends(get_current_user_from_header)
 ):
-    # Verify client belongs to user's company
-    result = await db.execute(select(models.Client).where(models.Client.id == avenant.client_id))
-    client = result.scalars().first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
-    
-    if client.company_id != current_user.company_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this client")
+    # Verify chantier belongs to user's company
+    result = await db.execute(select(models.Chantier).where(models.Chantier.id == avenant.chantier_id))
+    chantier = result.scalars().first()
+    if not chantier:
+        raise HTTPException(status_code=404, detail="Chantier not found")
+
+    if chantier.company_id != current_user.company_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this chantier")
 
     # Calculate total_ht
     total_ht = 0

@@ -35,7 +35,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="settings" element={<CompanySettings />} />
-            <Route path="create-avenant/:clientId" element={<CreateAvenant />} />
+            <Route path="create-avenant/:chantierId" element={<CreateAvenant />} />
             <Route path="avenant/:id" element={<AvenantDetails />} />
           </Route>
 

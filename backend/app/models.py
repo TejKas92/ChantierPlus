@@ -12,7 +12,7 @@ class Company(Base):
     created_at = Column(DateTime, default=func.now())
 
     users = relationship("UserProfile", back_populates="company")
-    clients = relationship("Client", back_populates="company")
+    chantiers = relationship("Chantier", back_populates="company")
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -30,8 +30,8 @@ class UserProfile(Base):
 
     company = relationship("Company", back_populates="users")
 
-class Client(Base):
-    __tablename__ = "clients"
+class Chantier(Base):
+    __tablename__ = "chantiers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=False)
@@ -40,14 +40,14 @@ class Client(Base):
     email = Column(Text, nullable=False)
     created_at = Column(DateTime, default=func.now())
 
-    company = relationship("Company", back_populates="clients")
-    avenants = relationship("Avenant", back_populates="client")
+    company = relationship("Company", back_populates="chantiers")
+    avenants = relationship("Avenant", back_populates="chantier")
 
 class Avenant(Base):
     __tablename__ = "avenants"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"), nullable=False)
+    chantier_id = Column(UUID(as_uuid=True), ForeignKey("chantiers.id"), nullable=False)
     description = Column(Text, nullable=False)
     type = Column(String, nullable=False) # FORFAIT, REGIE
     price = Column(Numeric, nullable=True)
@@ -60,4 +60,4 @@ class Avenant(Base):
     status = Column(String, default="DRAFT") # DRAFT, SIGNED, SENT
     created_at = Column(DateTime, default=func.now())
 
-    client = relationship("Client", back_populates="avenants")
+    chantier = relationship("Chantier", back_populates="avenants")

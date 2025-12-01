@@ -9,7 +9,7 @@ import API_URL from '../config';
 const MOCK_USER_ID = "123e4567-e89b-12d3-a456-426614174000";
 
 const CreateAvenant: React.FC = () => {
-    const { clientId } = useParams<{ clientId: string }>();
+    const { chantierId } = useParams<{ chantierId: string }>();
     const navigate = useNavigate();
 
     const [description, setDescription] = useState('');
@@ -41,7 +41,7 @@ const CreateAvenant: React.FC = () => {
             }
 
             const payload: any = {
-                client_id: clientId,
+                chantier_id: chantierId,
                 description,
                 type,
                 photo_url: photoUrl,
