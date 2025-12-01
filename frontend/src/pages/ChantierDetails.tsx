@@ -8,7 +8,7 @@ interface Avenant {
     id: string;
     description: string;
     type: string;
-    total_ht: number;
+    total_ht: number | string;  // Can be string from JSON numeric
     status: string;
     signed_at: string | null;
     created_at: string;
@@ -172,7 +172,7 @@ const ChantierDetails: React.FC = () => {
                                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 ml-7">
                                             <span className="flex items-center gap-1">
                                                 <Euro size={14} />
-                                                {avenant.total_ht.toFixed(2)} € HT
+                                                {parseFloat(String(avenant.total_ht)).toFixed(2)} € HT
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Clock size={14} />

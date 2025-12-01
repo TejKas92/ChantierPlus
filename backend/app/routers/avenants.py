@@ -8,30 +8,38 @@ from datetime import datetime
 import shutil
 import os
 from pathlib import Path
+from .auth import get_current_user
 
 router = APIRouter(
     prefix="/avenants",
     tags=["avenants"]
 )
 
-# Dependency to get current user based on a header (MOCK)
-async def get_current_user_from_header(x_user_id: str = Header(...), db: AsyncSession = Depends(database.get_db)):
-    try:
-        uuid_obj = UUID(x_user_id)
-    except ValueError:
-         raise HTTPException(status_code=401, detail="Invalid user ID header")
-    
-    result = await db.execute(select(models.UserProfile).where(models.UserProfile.id == uuid_obj))
-    user = result.scalars().first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
+@router.get("/{avenant_id}", response_model=schemas.Avenant)
+async def get_avenant(
+    avenant_id: UUID,
+    db: AsyncSession = Depends(database.get_db),
+    current_user: models.UserProfile = Depends(get_current_user)
+):
+    # Get avenant
+    result = await db.execute(select(models.Avenant).where(models.Avenant.id == avenant_id))
+    avenant = result.scalars().first()
+    if not avenant:
+        raise HTTPException(status_code=404, detail="Avenant not found")
+
+    # Verify avenant belongs to user's company (through chantier)
+    result = await db.execute(select(models.Chantier).where(models.Chantier.id == avenant.chantier_id))
+    chantier = result.scalars().first()
+    if not chantier or chantier.company_id != current_user.company_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this avenant")
+
+    return avenant
 
 @router.post("/", response_model=schemas.Avenant)
 async def create_avenant(
-    avenant: schemas.AvenantCreate, 
+    avenant: schemas.AvenantCreate,
     db: AsyncSession = Depends(database.get_db),
-    current_user: models.UserProfile = Depends(get_current_user_from_header)
+    current_user: models.UserProfile = Depends(get_current_user)
 ):
     # Verify chantier belongs to user's company
     result = await db.execute(select(models.Chantier).where(models.Chantier.id == avenant.chantier_id))
@@ -52,15 +60,15 @@ async def create_avenant(
         if avenant.hours is None or avenant.hourly_rate is None:
              raise HTTPException(status_code=400, detail="Hours and Hourly Rate are required for REGIE")
         total_ht = avenant.hours * avenant.hourly_rate
-    
+
     # Create avenant
     new_avenant = models.Avenant(
-        **avenant.model_dump(), 
+        **avenant.model_dump(),
         total_ht=total_ht,
         status="SIGNED", # As per requirements, it's created as SIGNED
         signed_at=datetime.now()
     )
-    
+
     db.add(new_avenant)
     await db.commit()
     await db.refresh(new_avenant)

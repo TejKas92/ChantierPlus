@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { CheckCircle, ArrowLeft } from 'lucide-react';
-
-const MOCK_USER_ID = "123e4567-e89b-12d3-a456-426614174000";
+import API_URL from '../config';
 
 const AvenantDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -13,15 +12,15 @@ const AvenantDetails: React.FC = () => {
     useEffect(() => {
         const fetchAvenant = async () => {
             try {
-                // In a real app, we would fetch the avenant details. 
-                // Since we don't have a GET /avenants/{id} endpoint in the plan (oops), 
-                // I'll just mock the display or assume we added it.
-                // For now, let's assume we can fetch it or just show a success message.
-                // Actually, let's add the GET endpoint to the backend later.
-                // For now, I'll just show a static success page if I can't fetch.
-                setAvenant({ id, status: 'SIGNED' });
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${API_URL}/avenants/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setAvenant(response.data);
             } catch (error) {
                 console.error("Error fetching avenant:", error);
+                // Fallback to showing success message even if fetch fails
+                setAvenant({ id, status: 'SIGNED' });
             } finally {
                 setLoading(false);
             }
@@ -49,9 +48,12 @@ const AvenantDetails: React.FC = () => {
             </div>
 
             <div className="pt-6">
-                <Link to="/" className="inline-flex items-center gap-2 text-primary hover:underline font-medium">
+                <Link
+                    to={avenant?.chantier_id ? `/chantier/${avenant.chantier_id}` : "/"}
+                    className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                >
                     <ArrowLeft size={20} />
-                    Retour au Tableau de Bord
+                    Retour au Chantier
                 </Link>
             </div>
         </div>

@@ -6,8 +6,6 @@ import SignaturePad from '../components/SignaturePad';
 import { Camera, Save, Loader2 } from 'lucide-react';
 import API_URL from '../config';
 
-const MOCK_USER_ID = "123e4567-e89b-12d3-a456-426614174000";
-
 const CreateAvenant: React.FC = () => {
     const { chantierId } = useParams<{ chantierId: string }>();
     const navigate = useNavigate();
@@ -100,11 +98,20 @@ const CreateAvenant: React.FC = () => {
         setSubmitting(true);
 
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Vous devez être connecté pour créer un avenant.');
+                navigate('/login');
+                return;
+            }
+
             let photoUrl = null;
             if (photo) {
                 const formData = new FormData();
                 formData.append('file', photo);
-                const uploadRes = await axios.post(`${API_URL}/avenants/files`, formData);
+                const uploadRes = await axios.post(`${API_URL}/avenants/files`, formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 photoUrl = uploadRes.data.photo_url;
             }
 
@@ -124,7 +131,7 @@ const CreateAvenant: React.FC = () => {
             }
 
             const response = await axios.post(`${API_URL}/avenants/`, payload, {
-                headers: { 'x-user-id': MOCK_USER_ID }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             navigate(`/avenant/${response.data.id}`);
