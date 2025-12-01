@@ -8,6 +8,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ActivateAccount from './pages/ActivateAccount';
 import Dashboard from './pages/Dashboard';
+import ChantierDetails from './pages/ChantierDetails';
 import CreateAvenant from './pages/CreateAvenant';
 import AvenantDetails from './pages/AvenantDetails';
 import CompanySettings from './pages/CompanySettings';
@@ -35,6 +36,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="settings" element={<CompanySettings />} />
+            <Route path="chantier/:chantierId" element={<ChantierDetails />} />
             <Route path="create-avenant/:chantierId" element={<CreateAvenant />} />
             <Route path="avenant/:id" element={<AvenantDetails />} />
           </Route>
