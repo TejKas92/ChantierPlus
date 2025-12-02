@@ -12,7 +12,7 @@ from ..auth_utils import (
     decode_access_token,
     generate_token,
 )
-from ..email_service import send_invitation_email, send_password_reset_email
+from ..email import send_invitation_email, send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

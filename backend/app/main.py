@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth, chantiers, avenants, transcribe, company
 from .database import engine, Base
 from . import models  # Import models to register them with SQLAlchemy
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI(title="ChantierPlus API")
 

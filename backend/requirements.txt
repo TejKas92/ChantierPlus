@@ -12,3 +12,6 @@ passlib[bcrypt]
 python-jose[cryptography]
 pydantic[email]
 aiosqlite
+aiosmtplib
+email-validator
+jinja2
