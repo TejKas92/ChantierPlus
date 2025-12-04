@@ -7,9 +7,11 @@ from uuid import UUID, uuid4
 from datetime import datetime
 import shutil
 import os
+import base64
 from pathlib import Path
 from .auth import get_current_user
-from ..email import send_avenant_email
+from ..email import send_email
+from ..pdf_generator import generate_avenant_pdf
 
 router = APIRouter(
     prefix="/avenants",
@@ -62,17 +64,197 @@ async def create_avenant(
              raise HTTPException(status_code=400, detail="Hours and Hourly Rate are required for REGIE")
         total_ht = avenant.hours * avenant.hourly_rate
 
+    # Handle signature: convert base64 to file if provided
+    signature_url = None
+    if avenant.signature_data:
+        # Extract base64 data from data URL
+        if avenant.signature_data.startswith("data:image"):
+            signature_base64 = avenant.signature_data.split(",")[1]
+        else:
+            signature_base64 = avenant.signature_data
+
+        # Decode and save as PNG file
+        signature_bytes = base64.b64decode(signature_base64)
+        unique_signature_filename = f"{uuid4()}.png"
+        signature_path = f"uploads/{unique_signature_filename}"
+
+        os.makedirs("uploads", exist_ok=True)
+        with open(signature_path, "wb") as f:
+            f.write(signature_bytes)
+
+        signature_url = signature_path
+
     # Create avenant
+    avenant_data = avenant.model_dump(exclude={"signature_data", "signature_url"})
     new_avenant = models.Avenant(
-        **avenant.model_dump(),
+        **avenant_data,
+        signature_url=signature_url,
         total_ht=total_ht,
-        status="SIGNED", # As per requirements, it's created as SIGNED
-        signed_at=datetime.now()
+        status="SIGNED",
+        signed_at=datetime.now(),
+        employee_id=current_user.id
     )
 
     db.add(new_avenant)
     await db.commit()
     await db.refresh(new_avenant)
+
+    # Generate PDF
+    try:
+        pdf_path = generate_avenant_pdf(
+            avenant_id=str(new_avenant.id),
+            chantier_name=chantier.name,
+            chantier_address=chantier.address,
+            description=new_avenant.description,
+            avenant_type=new_avenant.type,
+            total_ht=float(new_avenant.total_ht),
+            photo_path=new_avenant.photo_url,
+            signature_path=signature_url,
+            company_name=(await db.execute(select(models.Company).where(models.Company.id == chantier.company_id))).scalars().first().name,
+            created_at=new_avenant.created_at.strftime("%d/%m/%Y"),
+            price=float(new_avenant.price) if new_avenant.price else None,
+            hours=float(new_avenant.hours) if new_avenant.hours else None,
+            hourly_rate=float(new_avenant.hourly_rate) if new_avenant.hourly_rate else None
+        )
+
+        # Get all emails to send to:
+        # 1. Client email (from chantier)
+        # 2. Employee email (current user who created the avenant)
+        # 3. All company owners emails
+        recipients = [chantier.email, current_user.email]
+
+        # Get all owners of the company
+        owners_result = await db.execute(
+            select(models.UserProfile).where(
+                models.UserProfile.company_id == current_user.company_id,
+                models.UserProfile.role == "OWNER"
+            )
+        )
+        owners = owners_result.scalars().all()
+        for owner in owners:
+            if owner.email not in recipients:
+                recipients.append(owner.email)
+
+        # Read PDF file
+        with open(pdf_path, "rb") as f:
+            pdf_data = f.read()
+
+        # Send email to all recipients
+        for recipient_email in recipients:
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }}
+                    .header {{
+                        background-color: #f59e0b;
+                        color: white;
+                        padding: 20px;
+                        text-align: center;
+                        border-radius: 5px 5px 0 0;
+                    }}
+                    .content {{
+                        background-color: #f9fafb;
+                        padding: 30px;
+                        border: 1px solid #e5e7eb;
+                    }}
+                    .detail-row {{
+                        margin: 15px 0;
+                        padding: 10px;
+                        background-color: white;
+                        border-radius: 5px;
+                    }}
+                    .label {{
+                        font-weight: bold;
+                        color: #6b7280;
+                    }}
+                    .value {{
+                        color: #111827;
+                        font-size: 16px;
+                    }}
+                    .footer {{
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #e5e7eb;
+                        color: #6b7280;
+                        font-size: 14px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Nouvel Avenant</h1>
+                </div>
+
+                <div class="content">
+                    <p>Bonjour,</p>
+                    <p>Un nouvel avenant a été créé et signé pour le chantier <strong>{chantier.name}</strong>.</p>
+
+                    <div class="detail-row">
+                        <div class="label">Description :</div>
+                        <div class="value">{new_avenant.description}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="label">Type :</div>
+                        <div class="value">{new_avenant.type}</div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="label">Montant Total HT :</div>
+                        <div class="value">{float(new_avenant.total_ht):.2f} €</div>
+                    </div>
+
+                    <p><strong>Le PDF de l'avenant est joint à cet email.</strong></p>
+                </div>
+
+                <div class="footer">
+                    <p>Document généré par ChantierPlus</p>
+                    <p>ID Avenant : {str(new_avenant.id)}</p>
+                </div>
+            </body>
+            </html>
+            """
+
+            await send_email(
+                to_email=recipient_email,
+                subject=f"Avenant - {chantier.name}",
+                html_content=html_content,
+                attachments=[(f"avenant_{str(new_avenant.id)}.pdf", pdf_data, "application/pdf")]
+            )
+
+        # Delete temporary files (photo, signature, PDF)
+        files_to_delete = []
+        if new_avenant.photo_url and os.path.exists(new_avenant.photo_url):
+            files_to_delete.append(new_avenant.photo_url)
+        if signature_url and os.path.exists(signature_url):
+            files_to_delete.append(signature_url)
+        if os.path.exists(pdf_path):
+            files_to_delete.append(pdf_path)
+
+        for file_path in files_to_delete:
+            try:
+                os.remove(file_path)
+                print(f"[CLEANUP] Deleted temporary file: {file_path}")
+            except Exception as e:
+                print(f"[WARNING] Could not delete {file_path}: {e}")
+
+    except Exception as e:
+        print(f"[ERROR] Error generating/sending PDF: {e}")
+        # Don't fail the avenant creation if email sending fails
+        import traceback
+        traceback.print_exc()
+
     return new_avenant
 
 @router.post("/files")
@@ -119,49 +301,3 @@ async def upload_file(file: UploadFile = File(...)):
         file_object.write(file_content)
 
     return {"photo_url": file_location}
-
-@router.post("/{avenant_id}/send-email")
-async def send_avenant_by_email(
-    avenant_id: UUID,
-    db: AsyncSession = Depends(database.get_db),
-    current_user: models.UserProfile = Depends(get_current_user)
-):
-    """
-    Send an avenant by email to the chantier's contact email
-    """
-    # Get avenant
-    result = await db.execute(select(models.Avenant).where(models.Avenant.id == avenant_id))
-    avenant = result.scalars().first()
-    if not avenant:
-        raise HTTPException(status_code=404, detail="Avenant not found")
-
-    # Get chantier
-    result = await db.execute(select(models.Chantier).where(models.Chantier.id == avenant.chantier_id))
-    chantier = result.scalars().first()
-    if not chantier:
-        raise HTTPException(status_code=404, detail="Chantier not found")
-
-    # Verify authorization
-    if chantier.company_id != current_user.company_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this avenant")
-
-    # Get company
-    result = await db.execute(select(models.Company).where(models.Company.id == chantier.company_id))
-    company = result.scalars().first()
-
-    # Send email
-    try:
-        await send_avenant_email(
-            to_email=chantier.email,
-            chantier_name=chantier.name,
-            avenant_description=avenant.description,
-            total_ht=float(avenant.total_ht),
-            avenant_type=avenant.type,
-            avenant_id=str(avenant.id),
-            company_name=company.name if company else "ChantierPlus",
-            photo_path=avenant.photo_url,
-            signature_data=avenant.signature_data
-        )
-        return {"message": "Email envoyé avec succès", "email": chantier.email}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'envoi de l'email: {str(e)}")

@@ -55,9 +55,11 @@ class Avenant(Base):
     hourly_rate = Column(Numeric, nullable=True)
     total_ht = Column(Numeric, nullable=False)
     photo_url = Column(Text, nullable=True)
-    signature_data = Column(Text, nullable=True)
+    signature_url = Column(Text, nullable=True)
     signed_at = Column(DateTime, nullable=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=True)  # Employee who created the avenant
     status = Column(String, default="DRAFT") # DRAFT, SIGNED, SENT
     created_at = Column(DateTime, default=func.now())
 
     chantier = relationship("Chantier", back_populates="avenants")
+    employee = relationship("UserProfile", foreign_keys=[employee_id])

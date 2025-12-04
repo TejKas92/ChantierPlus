@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AudioRecorder from '../components/AudioRecorder';
 import SignaturePad from '../components/SignaturePad';
-import { Camera, Save, Loader2 } from 'lucide-react';
+import { Camera, Send, Loader2 } from 'lucide-react';
 import API_URL from '../config';
 
 const CreateAvenant: React.FC = () => {
@@ -295,8 +295,8 @@ const CreateAvenant: React.FC = () => {
                     disabled={submitting || !signatureData || !canSign}
                     className="w-full bg-primary text-white py-3 rounded-lg font-bold text-lg hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                 >
-                    {submitting ? <Loader2 className="animate-spin" /> : <Save />}
-                    Valider et Signer
+                    {submitting ? <Loader2 className="animate-spin" /> : <Send />}
+                    Valider et Envoyer par Email
                 </button>
             </form>
         </div>

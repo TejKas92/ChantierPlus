@@ -15,3 +15,5 @@ aiosqlite
 aiosmtplib
 email-validator
 jinja2
+weasyprint
+pillow

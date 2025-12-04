@@ -104,7 +104,8 @@ class AvenantBase(BaseModel):
     hours: Optional[Decimal] = None
     hourly_rate: Optional[Decimal] = None
     photo_url: Optional[str] = None
-    signature_data: Optional[str] = None
+    signature_url: Optional[str] = None
+    signature_data: Optional[str] = None  # For base64 signature upload
 
 class AvenantCreate(AvenantBase):
     chantier_id: UUID
@@ -116,6 +117,7 @@ class Avenant(AvenantBase):
     signed_at: Optional[datetime]
     status: str
     created_at: datetime
+    employee_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True

@@ -34,21 +34,28 @@ SMTP_FROM_NAME=ChantierPlus
 
 ### Fonctionnalités d'envoi d'email
 
-#### 1. Envoi d'un avenant par email
+#### 1. Envoi automatique d'avenant par email (avec PDF)
 
-Après la création et signature d'un avenant, vous pouvez l'envoyer par email au client :
+Lors de la création et signature d'un avenant, l'envoi par email est **automatique** :
 
 1. Créez un avenant avec photo et signature
-2. Sur la page de confirmation, cliquez sur "Envoyer par Email"
-3. L'email sera envoyé à l'adresse du chantier
+2. Cliquez sur "Valider et Envoyer par Email"
+3. Le système génère automatiquement un PDF professionnel
+4. Le PDF est envoyé par email à :
+   - Le client (email du chantier)
+   - L'employé qui a créé l'avenant
+   - Tous les propriétaires de l'entreprise
+5. Les fichiers temporaires (photo, signature, PDF) sont automatiquement supprimés
 
 **Contenu de l'email** :
-- Description des travaux
-- Type d'avenant (FORFAIT ou RÉGIE)
-- Montant total HT
-- Photo jointe en pièce jointe
-- Signature du client intégrée dans l'email
-- Lien vers l'avenant dans l'application
+- Résumé des informations (description, type, montant)
+- PDF complet en pièce jointe avec :
+  - Informations du chantier
+  - Description détaillée des travaux
+  - Détails financiers
+  - Photo des travaux
+  - Signature du client
+  - En-tête et footer professionnels
 
 #### 2. Invitation d'employés
 
@@ -81,9 +88,12 @@ Lorsqu'un utilisateur demande une réinitialisation :
 Pour tester que l'envoi d'emails fonctionne :
 
 1. Créez un chantier avec une adresse email valide
-2. Créez un avenant pour ce chantier
-3. Sur la page de confirmation, cliquez sur "Envoyer par Email"
-4. Vérifiez que l'email a bien été reçu
+2. Créez un avenant pour ce chantier (avec photo et signature)
+3. Cliquez sur "Valider et Envoyer par Email"
+4. Vérifiez que les emails avec PDF ont bien été reçus par :
+   - Le client (email du chantier)
+   - Vous-même (employé créateur)
+   - Les propriétaires de l'entreprise
 
 ## Dépannage
 
